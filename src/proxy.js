@@ -1,7 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
-// Fonksiyon adını 'proxy' olarak güncelledik ve TypeScript tiplerini kaldırdık
 export default async function proxy(request) {
   let response = NextResponse.next({
     request: {
@@ -39,8 +38,24 @@ export default async function proxy(request) {
     }
   )
 
-  // Oturumu kontrol et (Sadece gerekli cookie güncellemeleri için)
-  await supabase.auth.getUser()
+  // Kullanıcı bilgisini çekiyoruz
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const url = request.nextUrl.clone()
+
+  // --- YÖNLENDİRME MANTIĞI ---
+  
+  // 1. Eğer kullanıcı giriş yapmışsa VE ana sayfadaysa ('/'), dashboard'a gönder:
+  if (user && url.pathname === '/') {
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
+
+  // 2. Eğer kullanıcı giriş YAPMAMIŞSA ve dashboard'a girmeye çalışıyorsa, ana sayfaya (veya login'e) gönder:
+  if (!user && url.pathname.startsWith('/dashboard')) {
+    url.pathname = '/' // Burayı '/login' olarak da değiştirebilirsin
+    return NextResponse.redirect(url)
+  }
 
   return response
 }
