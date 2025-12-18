@@ -5,54 +5,79 @@ import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true) // Yüklenme durumu eklendi
   const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
-    const getUser = async () => {
+    const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login') // Giriş yapmamışsa login'e at
+        router.push('/login') // Giriş yapmamışsa login'e atar
       } else {
         setUser(user)
+        setLoading(false)
       }
     }
-    getUser()
-  }, [])
+    checkUser()
+  }, [router, supabase.auth]) // Bağımlılıklar eklendi
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/login')
+    router.push('/login') // Çıkış sonrası yönlendirme
   }
 
-  if (!user) return <div className="min-h-screen bg-[#0a0a0b] text-white flex items-center justify-center font-bold">Yükleniyor...</div>
+  // Yükleniyor ekranını daha şık bir spinner ile değiştirdik
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0b] text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-white p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#0a0a0b] text-white p-4 md:p-8">
+      <div className="max-w-5xl mx-auto">
+        {/* Header kısmı login sayfasındaki logo stiliyle uyumlu hale getirildi */}
         <header className="flex justify-between items-center mb-12 border-b border-white/10 pb-6">
-          <h1 className="text-2xl font-bold tracking-tighter text-blue-400">MANCHINI<span className="text-white">GAMES</span> / PANEL</h1>
+          <h1 className="text-2xl font-bold tracking-tighter text-blue-400">
+            MANCHINI<span className="text-white">GAMES</span> <span className="text-gray-500 text-sm ml-2">/ PANEL</span>
+          </h1>
           <button 
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg transition-all text-sm font-bold"
+            className="px-5 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl transition-all text-sm font-bold"
           >
-            Çıkış Yap
+            Güvenli Çıkış
           </button>
         </header>
 
-        <main className="grid gap-6">
+        <main className="grid gap-8">
+          {/* Karşılama Alanı */}
           <div className="p-8 bg-white/[0.02] border border-white/10 rounded-2xl backdrop-blur-xl">
-            <h2 className="text-xl font-semibold mb-2">Hoş geldin, Oyuncu!</h2>
-            <p className="text-gray-400">Giriş yapılan hesap: <span className="text-blue-400 font-mono">{user.email}</span></p>
+            <h2 className="text-2xl font-bold mb-2 text-white">Hoş geldin, Oyuncu! 🕹️</h2>
+            <p className="text-gray-400">Aktif Hesap: <span className="text-blue-400 font-mono">{user?.email}</span></p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {['Kütüphane', 'Profilim', 'Ayarlar'].map((item) => (
-              <div key={item} className="p-6 bg-white/[0.02] border border-white/5 rounded-xl hover:border-blue-500/30 transition-all cursor-pointer group">
-                <h3 className="font-bold group-hover:text-blue-400">{item}</h3>
-                <p className="text-xs text-gray-500 mt-1">Çok yakında burada...</p>
-              </div>
-            ))}
+          {/* Aksiyon Kartları */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-blue-500/30 transition-all cursor-pointer group">
+              <div className="text-2xl mb-3">📚</div>
+              <h3 className="font-bold text-lg group-hover:text-blue-400 transition-colors">Kütüphane</h3>
+              <p className="text-sm text-gray-500 mt-2">Comic Book projelerin ve oyunların burada listelenecek.</p>
+            </div>
+            
+            <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-green-500/30 transition-all cursor-pointer group">
+              <div className="text-2xl mb-3">⚔️</div>
+              <h3 className="font-bold text-lg group-hover:text-green-400 transition-colors">Keys and Knives</h3>
+              <p className="text-sm text-gray-500 mt-2">FiveM script yönetim paneli ve son duyurular.</p>
+            </div>
+
+            <div className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-purple-500/30 transition-all cursor-pointer group">
+              <div className="text-2xl mb-3">⚙️</div>
+              <h3 className="font-bold text-lg group-hover:text-purple-400 transition-colors">Profil Ayarları</h3>
+              <p className="text-sm text-gray-500 mt-2">Hesap bilgilerini ve aboneliklerini yönet.</p>
+            </div>
           </div>
         </main>
       </div>

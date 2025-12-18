@@ -1,10 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react' // useEffect eklendi
 import { createClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation' // Yönlendirme için eklendi
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true) // Giriş ve Kayıt modu arasında geçiş yapar
+  const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -13,12 +13,22 @@ export default function LoginPage() {
   const supabase = createClient()
   const router = useRouter()
 
+  // SIKINTI ÇÖZÜCÜ: Eğer kullanıcı zaten giriş yapmışsa direkt Dashboard'a atar
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        router.push('/dashboard')
+      }
+    }
+    checkUser()
+  }, [router, supabase.auth])
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage({ text: '', type: '' })
     
-    // Modun durumuna göre Supabase fonksiyonunu çağırır
     const { error } = isLogin 
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password })
@@ -28,9 +38,13 @@ export default function LoginPage() {
     } else {
       if (isLogin) {
         setMessage({ text: 'Giriş başarılı! Yönlendiriliyorsunuz...', type: 'success' })
-        setTimeout(() => router.push('/dashboard'), 1500) // Başarılıysa Dashboard'a gönderir
+        // 1.5 saniye bekleme, kullanıcıya başarı mesajını okutmak içindir
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 1500)
       } else {
         setMessage({ text: 'Kayıt başarılı! Şimdi giriş yapabilirsiniz.', type: 'success' })
+        setIsLogin(true) // Kayıttan sonra otomatik giriş moduna geçer
       }
     }
     setLoading(false)
@@ -38,12 +52,11 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-[#0a0a0b] overflow-hidden">
-      {/* Modern Arka Plan Efektleri */}
+      {/* Arka Plan Dekorasyonu */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-900/20 rounded-full blur-[120px]" />
 
       <div className="relative w-full max-w-md p-8 bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl mx-4">
-        {/* Logo ve Dinamik Başlık */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
             MANCHINI<span className="text-white">GAMES</span>
@@ -86,7 +99,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Giriş/Kayıt Geçiş Butonu */}
         <div className="mt-8 text-center">
           <button 
             onClick={() => setIsLogin(!isLogin)}
@@ -99,7 +111,6 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Mesaj Bildirimleri */}
         {message.text && (
           <div className={`mt-6 p-4 rounded-xl text-center text-sm font-medium border ${
             message.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'
