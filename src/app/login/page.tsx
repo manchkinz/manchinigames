@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react' // useEffect eklendi
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -13,16 +13,16 @@ export default function LoginPage() {
   const supabase = createClient()
   const router = useRouter()
 
-  // SIKINTI ÇÖZÜCÜ: Eğer kullanıcı zaten giriş yapmışsa direkt Dashboard'a atar
+  // Eğer kullanıcı zaten giriş yapmışsa direkt Dashboard'a fırlat
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        router.push('/dashboard')
+        window.location.href = '/dashboard'
       }
     }
     checkUser()
-  }, [router, supabase.auth])
+  }, [])
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,24 +35,26 @@ export default function LoginPage() {
 
     if (error) {
       setMessage({ text: `Hata: ${error.message}`, type: 'error' })
+      setLoading(false)
     } else {
       if (isLogin) {
         setMessage({ text: 'Giriş başarılı! Yönlendiriliyorsunuz...', type: 'success' })
-        // 1.5 saniye bekleme, kullanıcıya başarı mesajını okutmak içindir
+        
+        // 1 saniye bekle ve sayfayı yenileyerek dashboard'a git (En sağlam yöntem)
         setTimeout(() => {
-          router.push('/dashboard')
-        }, 1500)
+          window.location.href = '/dashboard'
+        }, 1000)
       } else {
         setMessage({ text: 'Kayıt başarılı! Şimdi giriş yapabilirsiniz.', type: 'success' })
-        setIsLogin(true) // Kayıttan sonra otomatik giriş moduna geçer
+        setIsLogin(true)
+        setLoading(false)
       }
     }
-    setLoading(false)
   }
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-[#0a0a0b] overflow-hidden">
-      {/* Arka Plan Dekorasyonu */}
+      {/* Arka Plan Efektleri */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-900/20 rounded-full blur-[120px]" />
 
@@ -92,6 +94,7 @@ export default function LoginPage() {
           </div>
 
           <button
+            type="submit"
             disabled={loading}
             className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] disabled:opacity-50"
           >
@@ -101,6 +104,7 @@ export default function LoginPage() {
 
         <div className="mt-8 text-center">
           <button 
+            type="button"
             onClick={() => setIsLogin(!isLogin)}
             className="text-sm text-gray-400 hover:text-white transition-colors"
           >
