@@ -1,8 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Next.js bu fonksiyonun adının tam olarak 'middleware' olmasını bekler
-export async function middleware(request: NextRequest) {
+// Bu fonksiyonun 'default' olarak dışa aktarılması hatayı çözecektir
+export default async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Oturumu tazelemek için kullanıcıyı kontrol ediyoruz
+  // Oturumu kontrol et
   await supabase.auth.getUser()
 
   return response
@@ -47,13 +47,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Aşağıdaki yollar dışındaki tüm sayfaları kontrol et:
-     * - _next/static (statik dosyalar)
-     * - _next/image (resimler)
-     * - favicon.ico
-     * - Resim dosyaları (png, jpg, vb.)
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
