@@ -1,8 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
-// Bu fonksiyonun 'default' olarak dışa aktarılması hatayı çözecektir
-export default async function middleware(request: NextRequest) {
+// Fonksiyon adını 'proxy' olarak güncelledik ve TypeScript tiplerini kaldırdık
+export default async function proxy(request) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -10,14 +10,14 @@ export default async function middleware(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
-        get(name: string) {
+        get(name) {
           return request.cookies.get(name)?.value
         },
-        set(name: string, value: string, options: any) {
+        set(name, value, options) {
           request.cookies.set({ name, value, ...options })
           response = NextResponse.next({
             request: {
@@ -26,7 +26,7 @@ export default async function middleware(request: NextRequest) {
           })
           response.cookies.set({ name, value, ...options })
         },
-        remove(name: string, options: any) {
+        remove(name, options) {
           request.cookies.set({ name, value: '', ...options })
           response = NextResponse.next({
             request: {
@@ -39,7 +39,7 @@ export default async function middleware(request: NextRequest) {
     }
   )
 
-  // Oturumu kontrol et
+  // Oturumu kontrol et (Sadece gerekli cookie güncellemeleri için)
   await supabase.auth.getUser()
 
   return response
