@@ -13,22 +13,23 @@ export default function LoginPage() {
   const supabase = createClient()
   const router = useRouter()
 
-  // Eğer kullanıcı zaten giriş yapmışsa direkt Dashboard'a fırlat
+  // SIKINTI ÇÖZÜCÜ: Eğer kullanıcı zaten giriş yapmışsa direkt Dashboard'a fırlatır
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        window.location.href = '/dashboard'
+        router.replace('/dashboard')
       }
     }
     checkUser()
-  }, [])
+  }, [router, supabase.auth])
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage({ text: '', type: '' })
     
+    // Supabase Auth İşlemi
     const { error } = isLogin 
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password })
@@ -40,10 +41,11 @@ export default function LoginPage() {
       if (isLogin) {
         setMessage({ text: 'Giriş başarılı! Yönlendiriliyorsunuz...', type: 'success' })
         
-        // 1 saniye bekle ve sayfayı yenileyerek dashboard'a git (En sağlam yöntem)
+        // 3. ADIM DÜZELTMESİ: Oturumun çerezlere yazılması için kısa bir bekleme ve yenileme
         setTimeout(() => {
-          window.location.href = '/dashboard'
-        }, 1000)
+          router.replace('/dashboard')
+          router.refresh() // Middleware'in yeni oturumu görmesini sağlar
+        }, 800)
       } else {
         setMessage({ text: 'Kayıt başarılı! Şimdi giriş yapabilirsiniz.', type: 'success' })
         setIsLogin(true)
@@ -54,11 +56,12 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-[#0a0a0b] overflow-hidden">
-      {/* Arka Plan Efektleri */}
+      {/* Modern Arka Plan Efektleri */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/20 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-900/20 rounded-full blur-[120px]" />
 
       <div className="relative w-full max-w-md p-8 bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl mx-4">
+        {/* Logo ve Başlık */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
             MANCHINI<span className="text-white">GAMES</span>
